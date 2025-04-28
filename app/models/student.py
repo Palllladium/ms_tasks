@@ -1,14 +1,22 @@
-from typing import List, Optional
+from __future__ import annotations
 from sqlmodel import SQLModel, Field, Relationship
-from .link import StudentGroupLink
+from typing import Optional
+from pydantic import ConfigDict
+from sqlalchemy.orm import Mapped, relationship
 
-class Student(SQLModel, table=True):
-    id:   Optional[int] = Field(default=None, primary_key=True)
+class StudentBase(SQLModel):
+    model_config = ConfigDict(from_attributes=True)
     name: str
-    age:  int
+    group_id: Optional[int] = Field(default=None, foreign_key="groups.id")
 
-    # Обратите внимание: здесь — строковая аннотация "Group"
-    groups: List["Group"] = Relationship(
-        back_populates="students",
-        link_model=StudentGroupLink
-    )
+class Student(StudentBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    group: Mapped[Optional["Group"]] = Relationship(sa_relationship=relationship(back_populates="students"))
+
+class StudentCreate(StudentBase):
+    pass
+
+class StudentUpdate(SQLModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: Optional[str] = None
+    group_id: Optional[int] = None
