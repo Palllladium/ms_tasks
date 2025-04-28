@@ -4,6 +4,7 @@ from typing import List, Optional
 from pydantic import ConfigDict
 from sqlalchemy.orm import Mapped, relationship
 
+
 class GroupBase(SQLModel):
     model_config = ConfigDict(from_attributes=True)
     name: str

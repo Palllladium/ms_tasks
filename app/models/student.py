@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import ConfigDict
 from sqlalchemy.orm import Mapped, relationship
 
+
 class StudentBase(SQLModel):
     model_config = ConfigDict(from_attributes=True)
     name: str
