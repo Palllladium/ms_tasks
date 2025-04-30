@@ -5,7 +5,7 @@ from pydantic import ConfigDict
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy import Column, Text
 
-# Модель пользователя
+
 class UserBase(SQLModel):
     model_config = ConfigDict(from_attributes=True)
     email: str = Field(index=True, unique=True)
@@ -24,11 +24,10 @@ class UserCreate(UserBase):
         ...,
         min_length=8,
         max_length=32,
-        examples=["SecurePassword123"],
         description="Пароль должен быть от 8 до 32 символов"
     )
 
-class UserUpdate(SQLModel):
+class UserUpdate(UserBase):
     model_config = ConfigDict(from_attributes=True)
-    email: Optional[str] = None
+    email: Optional[str] = None # не уверен, что можно переопределять
     password: Optional[str] = None
