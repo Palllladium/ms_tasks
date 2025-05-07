@@ -1,20 +1,24 @@
 from __future__ import annotations
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Text, Boolean, Field, Relationship
 from typing import Optional, List
 from pydantic import ConfigDict
 from sqlalchemy.orm import Mapped, relationship
-from sqlalchemy import Column, Text
 
 
 class UserBase(SQLModel):
     model_config = ConfigDict(from_attributes=True)
-    email: str = Field(index=True, unique=True)
+    email: str = Field(
+        index=True, 
+        unique=True, 
+        sa_type=Text
+    )
 
 class User(UserBase, table=True):
     __tablename__ = "users"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    hashed_password: str = Field(sa_column=Column(Text))
+    hashed_password: str = Field(sa_type=Text)
+    is_active: bool = Field(sa_type=Boolean, default=True)
     login_history: Mapped[List["LoginHistory"]] = Relationship(
         sa_relationship=relationship(back_populates="user")
     )
@@ -22,12 +26,19 @@ class User(UserBase, table=True):
 class UserCreate(UserBase):
     password: str = Field(
         ...,
-        min_length=8,
+        min_length=6,
         max_length=32,
-        description="Пароль должен быть от 8 до 32 символов"
+        description="Пароль должен быть от 6 до 32 символов"
     )
 
-class UserUpdate(UserBase):
-    model_config = ConfigDict(from_attributes=True)
-    email: Optional[str] = None # не уверен, что можно переопределять
-    password: Optional[str] = None
+class UserUpdate(SQLModel):
+    email: Optional[str] = Field(
+        None, 
+        description="Новый email (опционально)"
+    )
+    password: Optional[str] = Field(
+        None,
+        min_length=6,
+        max_length=32,
+        description="Новый пароль (опционально)"
+    )

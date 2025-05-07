@@ -1,15 +1,22 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from redis.asyncio import Redis
 
-from dotenv import load_dotenv
-import os
+from app.core.config import SETTINGS
 
 
-load_dotenv()
-DB_URL = os.getenv("DB_URL")
-REDIS_URL = os.getenv("REDIS_URL")
+POSTGRES_URL = (
+    f"postgresql+asyncpg://"
+    f"{SETTINGS.POSTGRES_USER}:{SETTINGS.POSTGRES_PASSWORD}@"
+    f"{SETTINGS.POSTGRES_HOST}:{SETTINGS.POSTGRES_PORT}/"
+    f"{SETTINGS.POSTGRES_DB}"
+)
 
-engine = create_async_engine(DB_URL, echo=True)
+REDIS_URL = (
+    f"redis://{SETTINGS.REDIS_HOST}:"
+    f"{SETTINGS.REDIS_PORT}/0"
+)
+
+engine = create_async_engine(POSTGRES_URL, echo=True)
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     expire_on_commit=False,
@@ -20,9 +27,6 @@ AsyncSessionLocal = async_sessionmaker(
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
-
-# Взято из проекта с API, добавляем 
-# только подключение к Redis
 
 redis = Redis.from_url(REDIS_URL)
 def get_redis():
