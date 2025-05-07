@@ -1,17 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter, 
+    Depends, 
+    HTTPException
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from pydantic import BaseModel
-from app.models.student import Student, StudentCreate, StudentUpdate
+from app.models.student import (
+    Student, 
+    StudentCreate, 
+    StudentUpdate
+)
 from app.models.group import Group
-from app.core.database import get_db
+from app.core.db_config import get_db
+
 
 router = APIRouter(prefix="/students", tags=["students"])
+
 
 class TransferRequest(BaseModel):
     from_group_id: int
     to_group_id: int
+
+
 
 @router.post("/", response_model=Student)
 async def create_student(
@@ -29,6 +41,7 @@ async def create_student(
     await db.refresh(db_student)
     return db_student
 
+
 @router.get("/{student_id}", response_model=Student)
 async def read_student(student_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Student).where(Student.id == student_id))
@@ -36,6 +49,7 @@ async def read_student(student_id: int, db: AsyncSession = Depends(get_db)):
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     return student
+
 
 @router.get("/", response_model=List[Student])
 async def read_students(
@@ -49,6 +63,7 @@ async def read_students(
         query = query.where(Student.group_id == group_id)
     result = await db.execute(query.offset(skip).limit(limit))
     return result.scalars().all()
+
 
 @router.patch("/{student_id}", response_model=Student)
 async def update_student(
@@ -77,6 +92,7 @@ async def update_student(
     await db.refresh(db_student)
     return db_student
 
+
 @router.delete("/{student_id}")
 async def delete_student(student_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Student).where(Student.id == student_id))
@@ -88,6 +104,7 @@ async def delete_student(student_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(student)
     await db.commit()
     return {"ok": True}
+
 
 @router.post("/{student_id}/transfer",
     responses={
