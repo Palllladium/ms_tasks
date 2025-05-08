@@ -11,3 +11,4 @@ openssl genrsa -out jwt-private.pem 2048
 openssl rsa -in jwt-private.pem -outform PEM -pubout -out jwt-public.pem
 # Then move it to /auth/
 ```
+У меня ключи лежали в папке app/certs/.
