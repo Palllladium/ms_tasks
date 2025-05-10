@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d products_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 4
+
+  elasticsearch:
+    image: elasticsearch:8.6.0
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+
+  purchase_service:
+    build: ./purchase_service
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - postgres
+
+  search_service:
+    build: ./search_service
+    ports:
+      - "8001:8001"
+    env_file: .env
+    depends_on:
+      - elasticsearch
+
+  etl_process:
+    build: ./etl_process
+    env_file: .env
+    depends_on:
+      - postgres
+      - elasticsearch

@@ -4,15 +4,10 @@ import os
 
 
 class Settings(BaseSettings):
-    POSTGRES_DB: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_HOST: str
-    POSTGRES_PORT: str
-
     SEARCH_SERVICE_HOST: str
     SEARCH_SERVICE_PORT: int
     SEARCH_SERVICE_PATH: str
+    SEARCH_SERVICE_INDEX_NAME: str
 
     class Config:
         env_file = os.path.join(
@@ -22,23 +17,13 @@ class Settings(BaseSettings):
         )
     
     @property
-    def postgres_url(self) -> str:
-        return (
-            f"postgresql+asyncpg://"
-            f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
-            f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/"
-            f"{self.POSTGRES_DB}"
-        )
-    
-    @property
-    def search_service_url(self) -> str:
+    def elastic_search_url(self) -> str:
         return (
             f"http://{self.SEARCH_SERVICE_HOST}:"
             f"{self.SEARCH_SERVICE_PORT}"
             f"{self.SEARCH_SERVICE_PATH}"
         )
 
-
 @lru_cache()
-def get_settings() -> Settings:
+def get_settings():
     return Settings()
