@@ -9,7 +9,7 @@ from fastapi import (
 )
 
 from core.db_config import get_db
-from models.products import Product
+from shared.models.products import Product
 from services.search_proxy import search_products_proxy
 from services.products import (
     get_all_products,

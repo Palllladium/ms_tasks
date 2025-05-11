@@ -1,5 +1,5 @@
 from elasticsearch import AsyncElasticsearch
-from core.config import get_settings
+from shared.core.config import get_settings
 
 
 settings = get_settings()

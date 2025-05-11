@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.products import Product
+from shared.models.products import Product
 from repositories.products import ProductRepository
 
 

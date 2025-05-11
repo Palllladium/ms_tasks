@@ -1,11 +1,11 @@
 import httpx
 from http import HTTPStatus
 from fastapi import HTTPException
-from core.config import get_settings
+from shared.core.config import get_settings
 
 
 settings = get_settings()
-SEARCH_SERVICE_URL = settings.search_service_url
+ELASTIC_SEARCH_URL = settings.elastic_search_url
 BAD_REQUEST = HTTPStatus.BAD_REQUEST
 BAD_GATEWAY = HTTPStatus.BAD_GATEWAY
 
@@ -25,7 +25,7 @@ async def search_products_proxy(name: str | None = None, description: str | None
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(SEARCH_SERVICE_URL, params=params)
+            response = await client.get(ELASTIC_SEARCH_URL, params=params)
             response.raise_for_status()
             return response.json()
     except httpx.HTTPError as e:

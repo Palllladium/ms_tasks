@@ -1,6 +1,6 @@
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.products import Product
+from shared.models.products import Product
 
 #
 #  Класс взаимодействия с таблицами

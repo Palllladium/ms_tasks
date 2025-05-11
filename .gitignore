@@ -1,5 +1,5 @@
 .env
 __pycache__/
-venv/
 venv_purchase/
 venv_search/
+venv_etl/
