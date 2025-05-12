@@ -27,6 +27,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - ./shared:/app/shared
 
   elasticsearch:
     image: elasticsearch:8.12.1
@@ -34,6 +36,9 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - logger.level=ERROR
+      - TINI_SUBREAPER=true
+      - TZ=UTC
     ports:
       - "9200:9200"
     volumes:
@@ -44,6 +49,7 @@ services:
       timeout: 5s
       retries: 4
       start_period: 10s
+    init: true
 
   search_service:
     container_name: search_service
@@ -55,11 +61,13 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+    volumes:
+      - ./shared:/app/shared
 
-  etl:
-    container_name: etl
+  etl_process:
+    container_name: etl_process
     build:
-      context: ./etl
+      context: ./etl_process
     env_file: .env
     depends_on:
       postgres:
@@ -67,6 +75,21 @@ services:
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped
+    volumes:
+      - ./shared:/app/shared
+
+  admin_panel:
+    container_name: admin_panel
+    build:
+      context: ./admin_panel
+    ports:
+      - "8002:8002"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./shared:/app/shared
 
 volumes:
   postgres_data:

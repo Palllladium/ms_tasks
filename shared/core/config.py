@@ -8,13 +8,16 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str
-    POSTGRES_PORT: str
+    POSTGRES_PORT: int
 
-    SEARCH_SERVICE_INDEX_NAME: str
     SEARCH_SERVICE_HOST: str
     SEARCH_SERVICE_PORT: int
     SEARCH_SERVICE_PATH: str
 
+    ELASTICSEARCH_INDEX_NAME: str
+    ELASTICSEARCH_SEARCH_SIZE: int
+    ELASTICSEARCH_HOST: str
+    ELASTICSEARCH_PORT: int
     SCHEDULE_INTERVAL_SECONDS: int
 
     class Config:
@@ -35,6 +38,13 @@ class Settings(BaseSettings):
     
     @property
     def elastic_search_url(self) -> str:
+        return (
+            f"http://{self.ELASTICSEARCH_HOST}:"
+            f"{self.ELASTICSEARCH_PORT}"
+        )
+
+    @property
+    def search_service_url(self) -> str:
         return (
             f"http://{self.SEARCH_SERVICE_HOST}:"
             f"{self.SEARCH_SERVICE_PORT}"

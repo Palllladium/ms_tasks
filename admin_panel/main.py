@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Purchase Service", 
+    title="Admin Panel",
     lifespan=lifespan
 )
 

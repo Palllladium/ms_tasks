@@ -2,4 +2,5 @@
 __pycache__/
 venv_purchase/
 venv_search/
-venv_etl/
+venv_etl_process/
+venv_admpanel/

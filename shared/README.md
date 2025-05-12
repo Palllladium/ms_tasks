@@ -1,7 +1,8 @@
 # Issue shared modules
 
 ```shell
-# 'Models' and 'Config' was moved to shared module because of link to other services
+# 'Models', 'Config' and 'Db_Config' was moved to shared module because of link to other services
 "/shared/models/products.py"
 "/shared/core/config.py"
+"/shared/core/db_config.py"
 ```

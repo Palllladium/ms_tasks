@@ -8,8 +8,9 @@ from fastapi import (
     Query
 )
 
-from core.db_config import get_db
+from shared.core.db_config import get_db
 from shared.models.products import Product
+
 from services.search_proxy import search_products_proxy
 from services.products import (
     get_all_products,
@@ -32,6 +33,17 @@ async def list_products(
     Получение списка всех продуктов
     """
     return await get_all_products(db)
+
+
+@router.get("/search")
+async def search_products(
+    name: str | None = Query(default=None),
+    description: str | None = Query(default=None)
+):
+    """
+    Поиск продуктов по названию или описанию через ElasticSearch
+    """
+    return await search_products_proxy(name, description)
 
 
 @router.get("/{product_id}", response_model=Product)
@@ -60,14 +72,3 @@ async def purchase_product(
     if not success:
         raise HTTPException(status_code=BAD_REQUEST, detail="Нельзя купить: товара нет в наличии")
     return {"status": "успешно куплено", "product_id": product_id}
-
-
-@router.get("/search")
-async def search_products(
-    name: str | None = Query(default=None),
-    description: str | None = Query(default=None)
-):
-    """
-    Поиск продуктов по названию или описанию через ElasticSearch
-    """
-    return await search_products_proxy(name, description)

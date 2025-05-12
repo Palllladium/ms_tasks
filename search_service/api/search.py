@@ -4,6 +4,7 @@ from fastapi import (
     Query
 )
 from http import HTTPStatus
+
 from services.search import search_products
 
 

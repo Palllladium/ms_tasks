@@ -1,10 +1,4 @@
-from elasticsearch import AsyncElasticsearch
-from shared.core.config import get_settings
-
-
-settings = get_settings()
-index = settings.SEARCH_SERVICE_INDEX_NAME
-es = AsyncElasticsearch(hosts=[settings.elastic_search_url])
+from shared.core.db_config import es, INDEX, SIZE
 
 
 async def search_products(
@@ -14,11 +8,12 @@ async def search_products(
     must_clauses = []
 
     if name:
-        must_clauses.append({"match": {"name": name}})
+        must_clauses.append({"match": {"product_name": name}})
     if description:
-        must_clauses.append({"match": {"description": description}})
+        must_clauses.append({"match": {"product_description": description}})
 
     query = {
+        "size": SIZE,
         "query": {
             "bool": {
                 "must": must_clauses
@@ -26,5 +21,5 @@ async def search_products(
         }
     }
 
-    response = await es.search(index=index, body=query)
+    response = await es.search(index=INDEX, body=query)
     return [hit["_source"] for hit in response["hits"]["hits"]]
