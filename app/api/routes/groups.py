@@ -1,18 +1,18 @@
-from fastapi import (
-    APIRouter, 
-    Depends, 
-    HTTPException
-)
-from sqlalchemy import select, func
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from pydantic import BaseModel
+from http import HTTPStatus
+
+from app.core.db_config import get_db
 from app.models.group import Group, GroupCreate
 from app.models.student import Student
-from app.core.db_config import get_db
+from app.repositories.group_repository import GroupRepository
+from app.repositories.student_repository import StudentRepository
 
 
 router = APIRouter(prefix="/groups", tags=["groups"])
+
 
 class StudentGroupAction(BaseModel):
     student_id: int
@@ -23,85 +23,85 @@ async def create_group(
     group: GroupCreate, 
     db: AsyncSession = Depends(get_db)
 ):
-    db_group = Group(**group.model_dump())
-    db.add(db_group)
-    await db.commit()
-    await db.refresh(db_group)
-    return db_group
+    """
+    Создание группы
+    """
+    repo = GroupRepository(db)
+    return await repo.create_group(group.model_dump())
 
 
 @router.get("/{group_id}", response_model=Group)
-async def read_group(group_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Group).where(Group.id == group_id))
-    group = result.scalars().first()
+async def read_group(
+    group_id: int, 
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Получение информации о группе по ID
+    """
+    repo = GroupRepository(db)
+    group = await repo.get_group(group_id)
     if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Group not found")
     return group
 
 
 @router.get("/", response_model=List[Group])
 async def read_groups(
     skip: int = 0, 
-    limit: int = 100,
+    limit: int = 100, 
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Group).offset(skip).limit(limit))
-    return result.scalars().all()
+    """
+    Получение информации о всех группах
+    """
+    repo = GroupRepository(db)
+    return await repo.get_all_groups(skip, limit)
 
 
 @router.delete("/{group_id}")
-async def delete_group(group_id: int, db: AsyncSession = Depends(get_db)):
-    group_result = await db.execute(
-        select(Group).where(Group.id == group_id)
-    )
-    group = group_result.scalars().first()
-    
+async def delete_group(
+    group_id: int, 
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Удаление группы по ID
+    """
+    group_repo = GroupRepository(db)
+    group = await group_repo.get_group(group_id)
+
     if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Group not found")
 
-    students_count = await db.execute(
-        select(func.count()).where(Student.group_id == group_id)
-    )
-    count = students_count.scalar()
-
+    count = await group_repo.get_students_count(group_id)
     if count > 0:
-        raise HTTPException(
-            status_code=400, 
-            detail="Cannot delete group with students"
-        )
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Cannot delete group with students")
 
-    await db.delete(group)
-    await db.commit()
-    
+    await group_repo.delete_group(group)
     return {"ok": True}
 
 
-@router.post("/{group_id}/students", 
-    response_model=Student,
-    responses={
-        404: {"description": "Group or student not found"},
-        409: {"description": "Student already in group"}
-    }
-)
+@router.post("/{group_id}/students", response_model=Student)
 async def add_student_to_group(
     group_id: int,
     student_data: StudentGroupAction,
     db: AsyncSession = Depends(get_db)
 ):
-    group_result = await db.execute(select(Group).where(Group.id == group_id))
-    group = group_result.scalars().first()
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
+    """
+    Добавление студента в группу
+    """
+    group_repo = GroupRepository(db)
+    student_repo = StudentRepository(db)
 
-    student_result = await db.execute(
-        select(Student).where(Student.id == student_data.student_id)
-    )
-    student = student_result.scalars().first()
+    group = await group_repo.get_group(group_id)
+    if not group:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Group not found")
+
+    student = await student_repo.get_student(student_data.student_id)
     if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Student not found")
 
     if student.group_id == group_id:
-        raise HTTPException(status_code=409, detail="Student already in group")
+        raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="Student already in group")
 
     student.group_id = group_id
     db.add(student)
@@ -110,29 +110,28 @@ async def add_student_to_group(
     return student
 
 
-@router.delete("/{group_id}/students/{student_id}",
-    responses={
-        404: {"description": "Group or student not found"},
-        400: {"description": "Student not in group"}
-    }
-)
+@router.delete("/{group_id}/students/{student_id}")
 async def remove_student_from_group(
     group_id: int,
     student_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    group_result = await db.execute(select(Group).where(Group.id == group_id))
-    group = group_result.scalars().first()
-    if not group:
-        raise HTTPException(status_code=404, detail="Group not found")
+    """
+    Удаление студента из группы
+    """
+    group_repo = GroupRepository(db)
+    student_repo = StudentRepository(db)
 
-    student_result = await db.execute(select(Student).where(Student.id == student_id))
-    student = student_result.scalars().first()
+    group = await group_repo.get_group(group_id)
+    if not group:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Group not found")
+
+    student = await student_repo.get_student(student_id)
     if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Student not found")
 
     if student.group_id != group_id:
-        raise HTTPException(status_code=400, detail="Student not in group")
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Student not in group")
 
     student.group_id = None
     db.add(student)
