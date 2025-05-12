@@ -7,6 +7,7 @@ class Person(ABC):
     def __init__(self, name, age):
         self.name = name
         self.age = age
+        self.top_grade = 5
 
     @abstractmethod
     def print_info(self): pass
@@ -15,26 +16,27 @@ class Person(ABC):
     def get_grant(self): pass
 
     def compare_grant(self, other):
-        if self.get_grant() > other.get_grant():
-            return f"{self.name} получает больше, чем {other.name}"
-        elif self.get_grant() < other.get_grant():
-            return f"{self.name} получает меньше, чем {other.name}"
-        else:
-            return f"{self.name} и {other.name} получают одинаково"
+        # Убрал форматированную печать. Вынесу её из тела метода 
+        if self.get_grant() > other.get_grant(): return 1
+        elif self.get_grant() < other.get_grant(): return -1
+        else: 0
         
 class Student(Person):
     def __init__(self, name, age, group, avg_grade):
         super().__init__(name, age)
         self.group = group
         self.avg_grade = avg_grade
+        self.high_grant = 6000
+        self.low_grant = 4000
 
     def print_info(self):
         print(f"Студент: {self.name}, возраст: {self.age}, группа: {self.group}, средний балл: {self.avg_grade}")
 
     def get_grant(self):
         return (
-            6000 if self.avg_grade == 5
-            else 4000 if self.avg_grade < 5
+            # Убрал хардкод литералов, заменил на поля класса
+            self.high_grant if self.avg_grade == self.top_grade
+            else self.low_grant if self.avg_grade < self.top_grade
             else 0
         )
         
@@ -42,6 +44,8 @@ class PhDStudent(Student):
     def __init__(self, name, age, group, avg_grade, research_title):
         super().__init__(name, age, group, avg_grade)
         self.research_title = research_title
+        self.high_grant = 8000
+        self.low_grant = 6000
 
     def print_info(self):
         print(f"Аспирант: {self.name}, возраст: {self.age}, группа: {self.group}, средний балл: {self.avg_grade}")
@@ -49,8 +53,9 @@ class PhDStudent(Student):
 
     def get_grant(self):
         return (
-            8000 if self.avg_grade == 5
-            else 6000 if self.avg_grade < 5
+            # Убрал хардкод литералов, заменил на поля класса
+            self.high_grant if self.avg_grade == self.top_grade
+            else self.low_grant if self.avg_grade < self.top_grade
             else 0
         )
 
@@ -64,4 +69,11 @@ if __name__ == "__main__":
     p1.print_info()
     print(f"Стипендия: {p1.get_grant()} руб.\n")
 
-    print(s1.compare_grant(p1))
+    comparison_result = s1.compare_grant(p1)
+    
+    if comparison_result == 1:
+        print(f"{s1.name} получает больше, чем {p1.name}")
+    elif comparison_result == -1:
+        print(f"{s1.name} получает меньше, чем {p1.name}")
+    else:
+        print(f"{s1.name} и {p1.name} получают одинаково")
